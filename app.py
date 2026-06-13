@@ -18,14 +18,14 @@ def webhook():
     time = datetime.now().strftime("%H:%M:%S")
 
     if action == "BUY" and position is None:
-        position = "LONG"
-        print(f"[{time}] Viga Trader BUY {symbol}")
+    position = "LONG"
+    print(f"[{time}] Viga Trader BUY {symbol}", flush=True)
 
     elif action == "SELL" and position == "LONG":
-        position = None
-        profit = balance * 0.001
-        balance += profit
-        print(f"[{time}] Viga Trader SELL {symbol} | Balance: {balance:.2f}")
+    position = None
+    profit = balance * 0.001
+    balance += profit
+    print(f"[{time}] Viga Trader SELL {symbol} | Balance: {balance:.2f}", flush=True)
 
     return "OK"
 
