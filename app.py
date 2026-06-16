@@ -7,6 +7,9 @@ app = Flask(__name__)
 balance = 10000
 position = None
 
+entry_price = None
+trades = 0
+
 
 def log(msg):
     print(msg, flush=True)
@@ -14,7 +17,7 @@ def log(msg):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    global balance, position
+    global balance, position, entry_price, trades
 
     data = request.json
 
@@ -23,25 +26,44 @@ def webhook():
 
     action = data.get("action")
     symbol = data.get("symbol")
+    price = float(data.get("price", 0))
 
     time = datetime.now().strftime("%H:%M:%S")
 
     # 🟢 BUY
     if action == "BUY" and position is None:
         position = "LONG"
-        log(f"[{time}] Viga Trader BUY {symbol}")
+        entry_price = price
+        trades += 1
+
+        log(f"[{time}] BUY {symbol} @ {entry_price}")
 
     # 🔴 SELL
     elif action == "SELL" and position == "LONG":
         position = None
-        profit = balance * 0.001
+
+        exit_price = price
+        profit = exit_price - entry_price
+
         balance += profit
-        log(f"[{time}] Viga Trader SELL {symbol} | Balance: {balance:.2f}")
+
+        log(f"[{time}] SELL {symbol} @ {exit_price} | PnL: {profit:.2f} | Balance: {balance:.2f}")
+
+        entry_price = None
 
     return "OK"
 
 
-# 🟢 مهم لـ Render (PORT الديناميكي)
+@app.route('/status', methods=['GET'])
+def status():
+    return {
+        "balance": round(balance, 2),
+        "position": position,
+        "entry_price": entry_price,
+        "trades": trades
+    }
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
