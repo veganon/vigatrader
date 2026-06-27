@@ -12,6 +12,7 @@ trades = 0
 
 risk_percent = 0.10
 stop_loss_percent = 0.01
+take_profit_percent = 0.02
 
 
 def log(msg):
@@ -44,7 +45,7 @@ def webhook():
 
         log(f"[{time}] BUY {symbol} @ {price:.2f} | Amount: {trade_amount:.2f} | Shares: {shares:.4f}")
 
-    elif action in ["SELL", "STOP"] and position == "LONG":
+    elif action in ["SELL", "STOP", "TAKE_PROFIT"] and position == "LONG":
         pnl = (price - entry_price) * shares
         balance += pnl
 
@@ -63,9 +64,11 @@ def webhook():
 @app.route('/status', methods=['GET'])
 def status():
     stop_price = None
+    take_profit_price = None
 
     if position == "LONG" and entry_price:
         stop_price = entry_price * (1 - stop_loss_percent)
+        take_profit_price = entry_price * (1 + take_profit_percent)
 
     return {
         "balance": round(balance, 2),
@@ -73,8 +76,10 @@ def status():
         "entry_price": entry_price,
         "shares": round(shares, 4),
         "stop_loss_price": round(stop_price, 2) if stop_price else None,
+        "take_profit_price": round(take_profit_price, 2) if take_profit_price else None,
         "risk_percent": risk_percent,
         "stop_loss_percent": stop_loss_percent,
+        "take_profit_percent": take_profit_percent,
         "trades": trades
     }
 
